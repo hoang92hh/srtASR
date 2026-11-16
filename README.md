@@ -9,7 +9,7 @@ Mở `run.bat`, chọn **Folder input**, chọn **Folder output**, rồi nhấn 
 Ứng dụng xử lý lần lượt các file trực tiếp trong folder input. Ví dụ `tập01.mp4` tạo `tập01.srt` và `tập01.json` trong folder output. Thanh tiến trình tính theo số file đã xử lý. Log ghi bước đang chạy và lỗi của từng file.
 
 - Hỗ trợ WAV, MP3, FLAC, M4A, AAC, OGG, OPUS, WMA, MP4, MKV, MOV, AVI, WEBM và TS.
-- Bật **Phân biệt người nói (CAM++)** để lưu speaker trong JSON và cắt phụ đề theo lượt nói. Nhãn được đánh số theo lần xuất hiện trong mỗi file.
+- Bật **Phân biệt người nói (CAM++)** để lưu speaker theo token trong JSON. Một vùng VAD có nhiều speaker được ghép thành một segment, nhãn chi tiết nằm trên từng token. Nhãn được đánh số theo lần xuất hiện trong mỗi file.
 - Bật **Ghi đè SRT đã tồn tại** để xử lý lại. Mặc định bỏ qua file đã có SRT.
 - Các file trùng tên gốc như `a.wav` và `a.mp4` sẽ báo lỗi để người dùng đổi tên trước khi chạy lại.
 - File lỗi được ghi log rồi chuyển sang file kế tiếp. Nếu không phát hiện giọng nói, ứng dụng xuất SRT rỗng.
@@ -39,7 +39,9 @@ Thêm `--speaker` để bật CAM++, `--overwrite` để ghi đè SRT.
 
 ## Kiểm tra kết quả
 
-Pipeline dùng Paraformer tiếng Trung, FSMN-VAD và CT-Punc. SRT Builder căn text với timestamp token rồi cắt theo dấu câu, khoảng nghỉ, độ dài và thay đổi speaker. Timestamp được đối chiếu vùng VAD. JSON giữ kết quả model, VAD, token, phụ đề và lỗi để truy vết. Khi text không khớp số timestamp, file được báo lỗi cùng JSON để kiểm tra.
+Pipeline dùng Paraformer tiếng Trung, FSMN-VAD và CT-Punc. FSMN-VAD dùng ngưỡng khoảng lặng cố định 300 ms, với `dynamic_silence=False`, áp dụng đồng nhất cho VAD độc lập và VAD trong pipeline ASR. Mỗi vùng VAD có token tạo một segment SRT. Nội dung gồm các token trong vùng, start lấy mốc bắt đầu token đầu tiên và end lấy mốc kết thúc token cuối cùng. Dấu câu được giữ trong nội dung. Giới hạn mỗi vùng VAD là khoảng 30 giây. Timestamp token được đối chiếu và giới hạn trong vùng VAD. JSON giữ cấu hình VAD, kết quả model, các vùng VAD, token có `vad_index`, phụ đề và lỗi để truy vết. Khi text không khớp số timestamp, file được báo lỗi cùng JSON để kiểm tra.
+
+Để tạo lại phụ đề theo cấu hình này, mở lại ứng dụng, bật **Ghi đè SRT đã tồn tại** rồi chạy lại thư mục input.
 
 Log giao diện được lưu tại `.logs/asrtool.log`. Đầu ra bổ sung từ thư viện khi chạy bằng `run.bat` được lưu tại `.logs/runtime.log`.
 
